@@ -84,11 +84,18 @@ const PORT = process.env.PORT || 3000;
 
 async function startServer() {
   try {
-    // Sincronizar base de datos (crea tablas si no existen)
+    // Verificar conexión a la base de datos
     await sequelize.authenticate();
     console.log('[DB] Conexión a MySQL exitosa');
-    await sequelize.sync({ alter: true }); // alter=true actualiza columnas existentes
-    console.log('[DB] Tablas sincronizadas');
+    console.log(`[DB] Host: ${process.env.DB_HOST} | BD: ${process.env.DB_NAME} | Usuario: ${process.env.DB_USER}`);
+
+    // En producción usar force:false para no alterar tablas existentes
+    const syncOptions = process.env.NODE_ENV === 'production'
+      ? { force: false }      // solo crea tablas que no existen, NO altera
+      : { alter: true };      // en desarrollo actualiza columnas
+
+    await sequelize.sync(syncOptions);
+    console.log('[DB] Tablas sincronizadas (modo:', process.env.NODE_ENV || 'development', ')');
 
     server.listen(PORT, () => {
       console.log('');
